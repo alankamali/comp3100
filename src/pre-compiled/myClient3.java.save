@@ -41,8 +41,8 @@ class myClient {
 		serArr = new Server[servers.getLength()];
 		int nServers = 0;
 		String largestServerType = "";
-		int maxCores = 0;
 		for (int i = 0; i < servers.getLength(); i++){
+			int maxCores = 0;
 			Element server = (Element) servers.item(i);
 			String t = server.getAttribute("type");
 			int l = Integer.parseInt(server.getAttribute("limit"));
@@ -54,35 +54,13 @@ class myClient {
 			Server temp = new Server(i, t, l, b, r, c, m, d);
 			serArr[i] = temp;
 			
-			//if (serArr[i].nCore > maxCores){
-			//	maxCores = serArr[i].nCore;
-			//	nServers = serArr[i].limit;
-			//	largestServerType = serArr[i].type;
-			//}
-			
-			//start 
-			if (c > maxCores) {
-				maxCores = c;
-				nServers = l;
-				largestServerType = t;
+			if (serArr[i].nCore > maxCores){
+				maxCores = serArr[i].nCore;
+				nServers = serArr[i].limit;
+				largestServerType = serArr[i].type;
 			}
-			//finito
-		}
 
-
-		//from pseudo code from line 15 - 21
-		dout.write("REDY\n".getBytes());
-		dout.flush();
-		System.out.println("Client: REDY");
-		//recieve after first REDY
-		inHandShake = din.readLine();
-		//for debugging
-		System.out.println("Server: " + inHandShake);
-		//end of debug
 		int serverCounter = 0;
-
-		//TO DO
-		//need to handle when inHandShake is JCPL fml 
 		while (!inHandShake.equals("NONE")){
 			if (inHandShake.equals("OK")) {
 				dout.write("REDY\n".getBytes());
@@ -90,13 +68,13 @@ class myClient {
 				System.out.println("Client: REDY");
 				inHandShake = din.readLine();
 			}
-
 			//testing again LOL
 			System.out.println("Server: " + inHandShake);
 			
 			//schedule job if readLine() is JOBN
 			String[] jobRes = inHandShake.split(" ");
 			int jobID = Integer.parseInt(jobRes[2]);
+			//  xxx
 			if (jobRes[0].equals("JOBN")){
 				dout.write(("SCHD " + jobID + " " + largestServerType+ " " + serverCounter + "\n").getBytes());
 				dout.flush();
@@ -105,7 +83,6 @@ class myClient {
 			}
 			if (serverCounter >= nServers){
 				//resetting counter to 0 for LLR
-				System.out.println("serverCounter: " + serverCounter + "nServers: " +nServers);
 				System.out.println("max # of servers is used, setting back to 0");
 				serverCounter = 0;
 			}
