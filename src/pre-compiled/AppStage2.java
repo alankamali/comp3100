@@ -115,9 +115,7 @@ public class AppStage2 {
 						String[] temp = s.split(" ");
 						whichServerToSendTo.add(temp);
 					}
-					for (String[] s : whichServerToSendTo){
-						System.out.println("whichServSend2: " + java.util.Arrays.toString(s));
-					}
+
 
 					System.out.println("msgRes: " + java.util.Arrays.toString(msgRes));
 
@@ -137,34 +135,44 @@ public class AppStage2 {
 					// 0       1         2         3         4        5     6     7
 					
 					//Sort the servers in ascending order of cores
+					// Collections.sort(whichServerToSendTo, new Comparator<String[]>(){
+					// 	public int compare (String[] s1, String[] s2){
+					// 		return s1[4].compareTo(s2[4]);
+					// 	}
+					// });
+
+
 					Collections.sort(whichServerToSendTo, new Comparator<String[]>(){
 						public int compare (String[] s1, String[] s2){
-							return s1[4].compareTo(s2[4]);
+							int s11 = Integer.parseInt(s1[4]);
+							int s22 = Integer.parseInt(s2[4]);
+							if (s11 >= s22){
+								return s22;
+							}else {
+								return s11;
+							}
 						}
 					});
+
+
+
+
+					for (String[] s : whichServerToSendTo){
+						System.out.println("whichServSend2: " + java.util.Arrays.toString(s));
+					}
 
 					Boolean capableServerFound = false;
 					if (!capableServerFound){
 						for (String[] server : whichServerToSendTo){
 							System.out.println(Integer.parseInt(server[4]) + " this is the number of cores of server[4");
 							System.out.println(Integer.parseInt(msgRes[4]) + " this is the number of cores of msgRes[4");
-							if ((Integer.parseInt(server[4]) >= Integer.parseInt(msgRes[4])) && Integer.parseInt(server[5]) >= Integer.parseInt(msgRes[5]) && Integer.parseInt(server[6]) >= Integer.parseInt(msgRes[6])){
+							if ((Integer.parseInt(server[4]) >= Integer.parseInt(msgRes[4])) && Integer.parseInt(server[5]) >= Integer.parseInt(msgRes[5]) && Integer.parseInt(server[6]) >= Integer.parseInt(msgRes[6]) && Integer.parseInt(server[7]) < 2){
 								send("SCHD " + msgRes[2] + " " + server[0] + " " + server[1]);
 								capableServerFound = true;
 
 								break;
 							} 
-							
-							
-							// else {
-							// 	String[] bigS = gimme(Integer.parseInt(msgRes[4]), Integer.parseInt(msgRes[5]), Integer.parseInt(msgRes[6]));
-							// 	System.out.print(java.util.Arrays.toString(bigS) +"\n");
-							// 	send("SCHD " + msgRes[2] + " " + bigS[0] + " " + bigS[1]);
-							// 	break;
-							// }	
-
 						}
-						System.out.println("capableServerFound is " + capableServerFound);
 
 					} 
 					if (!capableServerFound){
@@ -190,31 +198,6 @@ public class AppStage2 {
 						//would be n ice to loop thru and find the most efficient server (ie, least amount of remainign time left) to send to
 						send("SCHD " + msgRes[2] + " " + whichServerToSendTo.get(0)[0] + " " + Integer.parseInt(whichServerToSendTo.get(0)[1]));
 					}
-
-					// ArrayList<String[]> lstjResponseArr = new ArrayList<String[]>();
-					// System.out.println("just before lstj");
-					// String decidedServer = "";
-					// for (String[] server : whichServerToSendTo){
-					// 	System.out.println("xxxxx");
-					// 	Boolean bootingOrActiveFound = false;
-					// 	if ((server[2].equals("booting") || server[2].equals("active")) && Integer.parseInt(server[4]) >= Integer.parseInt(msgRes[5])) {
-					// 		System.out.println("zzzzz");
-					// 		send("LSTJ " + server[0] + " " + Integer.parseInt(server[1]));
-					// 		msg = receive(); //Data x y
-					// 		send("OK");
-					// 		String[] lstjRes = msg.split(" ");
-					// 		for (int i = 0; i < Integer.parseInt(lstjRes[1]); i++){
-
-					// 			msg = receive();
-					// 			String[] temp = msg.split(" ");
-					// 			lstjResponseArr.add(temp);
-					// 			System.out.println(java.util.Arrays.toString(temp) + "temp msg");
-					// 			if (Integer.parseInt(server[4]) - Integer.parseInt(temp[5]) >= Integer.parseInt(msgRes[4])){
-					// 				send("SCHD " + msgRes[2] + " " + server[0] + " " + server[1]);
-					// 			}
-					// 		}
-					// 		bootingOrActiveFound = true;
-					// 	}
 
 				// example, if:
 				// c: Gets Capable x y z
@@ -258,31 +241,7 @@ public class AppStage2 {
 		}
 	}
 
-	public String[] gimme (int core, int memory, int disk){
-		send("GETS Capable " + core + " " + memory + " " + disk);
-		msg = receive();
-		String[] getsAllRes = msg.split(" ");
-		send("OK");
-		ArrayList<String[]> getsAllArrRes = new ArrayList<String[]>();
-		for (int i = 0; i < Integer.parseInt(getsAllRes[1]); i++){
-			msg = receive();
-			String[] temp = msg.split(" ");
-			getsAllArrRes.add(temp);
-		}
-		String[] currBiggestServer = getsAllArrRes.get(0);
-		for (int i = 1; i < getsAllArrRes.size() - 1; i++) {
-			currBiggestServer = getsAllArrRes.get(0);
-			if((Integer.parseInt(getsAllArrRes.get(i)[4]) >= core) && (Integer.parseInt(getsAllArrRes.get(i)[5]) >= memory) && (Integer.parseInt(getsAllArrRes.get(i)[6]) >= memory)){
-				currBiggestServer = getsAllArrRes.get(i);
-				break;
-			}
-		}
-		send("OK");
-		msg = receive();
-		return currBiggestServer;
-	}
 
-	
 	//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  END OF TESTING  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 	//sending msgs to server
