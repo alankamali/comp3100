@@ -82,6 +82,45 @@ public class App {
 					}
 
 				}
+				//Testing for stage 2 (or really just visualising how to use gets capable)
+				/**
+				s:	JOBN 101 3 380 2 900 2500  
+				c:	GETS Capable 2 900 2500
+				s:	DATA 5 123
+				c:	OK
+				s:	juju 0 booting 120 0 2500 13100 1 0
+				s:	juju 1 booting 156 0 2500 13900 1 0
+				s:	joon 0 active 97 1 15300 60200 0 1
+				s:	joon 1 inactive -1 4 16000 64000 0 0
+				s:	super-silk 0 inactive -1 16 64000 512000 0 0
+				c:	OK
+				s:	.
+
+				example, if:
+				c: Gets Capable x y z
+				s: serverType serverID state curStartTime(basically when the server goes from booting to active) core memory disk #wJobs #rJobs
+
+				============================================================================================================ 
+				
+				c: LSTJ medium 3
+				s: DATA 3 59 // 3 jobs and the length of each message is 59 character long
+				c: OK
+				s: 2 2 139 1208 172 2 100 200
+				s: 7 2 192 1224 328 1 120 450
+				s: 11 1 324 -1 49 4 380 1000 // -1 for unknown start time since the job 11 is waiting OK
+				c: .
+				 
+				example response to LSTJ command is:
+				jobID jobState submitTime startTime estRunTime core memory disk 
+				for jobState:
+					1 means waiting
+					2 means running
+
+					
+				 */
+				//Finished testing for stage 2
+
+
 				//if Job Complete, then send ready and read new msg
 				if (jobCMD.equals("JCPL")){
 					send("REDY");
