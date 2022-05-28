@@ -19,9 +19,6 @@ public class AppStage2 {
 	Server[] serArr = new Server[1];
 	String msg = "";
 	boolean stop = false;
-
-
-	//for stage 2 testing below might have to delete later
 	ArrayList<Server> serrArrList = new ArrayList<Server>();
 
 	
@@ -52,6 +49,7 @@ public class AppStage2 {
 		send("REDY");
 		msg = receive();
 
+		//just assign the first job to the first capable server then run algorithm
 		assignFirstSCHD();
 		newAlgo();
 
@@ -61,18 +59,10 @@ public class AppStage2 {
 	/**
 	Implenet new algorithm such that it performs better than baseline algorithms in general
 
-	I have no idea what im doing yet so this is just testing stage
-
 	what I want to do:
 		1) as jobs come in, give to the first server which can take it.
-			- if server has waiting jobs, go to next server from getscapable
-		2) as soon as limit is reached switch to second biggest server, keep going till all servers are exhausted
-			* if i have an arraylist of servers from biggest to small, then i can iterate through them?
-		3) if all servers have running jobs, put next job on the biggest server with shortest estWaitingTime
-
-
+		2) if server has waiting jobs > 2, go to next server which is capable
 	 */
-	//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX START OF TESTING XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 	
 	public void newAlgo () {
 		if (!msg.equals("NONE")) {
@@ -90,16 +80,13 @@ public class AppStage2 {
 				//Take the new server msg and split into sections
 				String[] msgRes = msg.split(" ");
 
-				//JOBN FORMAT:
-				//	JOBN submitTime jobID estRuntime core memory disk
-
 				if (msgRes[0].equals("JOBN")) {
 					send("GETS Capable " + msgRes[4] + " " + msgRes[5] + " " + msgRes[6]);
 
 					msg = receive(); //send back eg: DATA 5 123 (5 lines of data at 123 length each)
-					//after recieving DATA X i need to loop X times and record the data 
+					
+					//Store the msgs that come after DATA 
 					String[] getsCapableRes = msg.split(" ");
-
 					int numberOfDataLinesFromGetsCapable = Integer.parseInt(getsCapableRes[1]);
 					ArrayList<String> serversAvailFromGetsCapable = new ArrayList<String>();
 					
@@ -109,39 +96,19 @@ public class AppStage2 {
 						msg = receive();
 						serversAvailFromGetsCapable.add(msg);
 					}
-					ArrayList<String[]> whichServerToSendTo = new ArrayList<String[]>();
 
+					//split each line of the msgs from serversAvailFromGetsCapable
+					ArrayList<String[]> whichServerToSendTo = new ArrayList<String[]>();
 					for (String s : serversAvailFromGetsCapable){
 						String[] temp = s.split(" ");
 						whichServerToSendTo.add(temp);
 					}
 
-
-					System.out.println("msgRes: " + java.util.Arrays.toString(msgRes));
-
-
 					send("OK");
 					msg = receive(); //this should be "."
-					/**
-					for servers S in whichServer
-						if server is booting
-							add to servers to run lstj on
-						if none booting
-							schd to first avail 
-					 */
-
-					//LSTJ response: 	
-					//jobID jobState submitTime startTime estRunTime core memory disk
-					// 0       1         2         3         4        5     6     7
 					
-					//Sort the servers in ascending order of cores
-					// Collections.sort(whichServerToSendTo, new Comparator<String[]>(){
-					// 	public int compare (String[] s1, String[] s2){
-					// 		return s1[4].compareTo(s2[4]);
-					// 	}
-					// });
-
-
+					//Sort the servers in ascending order of cores, this will also improve utilisation since servers with the most "readilyavail cores" havent been booted up yet.
+					//NB: learnt how to sort from this link https://stackoverflow.com/questions/4699807/sort-arraylist-of-array-in-java
 					Collections.sort(whichServerToSendTo, new Comparator<String[]>(){
 						public int compare (String[] s1, String[] s2){
 							int s11 = Integer.parseInt(s1[4]);
@@ -154,18 +121,20 @@ public class AppStage2 {
 						}
 					});
 
+					/**
+						Loop through the servers which are capable to run the job
+						 	find one that has enough resources to run the job now
+							also has less than 2 waiting jobs
+						if not found
+							find out what jobs are running on the server 
+							schd job to server which is capable of running it and wait
 
+							(what I should be doing is find out the server with least amount of estRunTime remaining and schd to them)
 
-
-					for (String[] s : whichServerToSendTo){
-						System.out.println("whichServSend2: " + java.util.Arrays.toString(s));
-					}
-
+					 */
 					Boolean capableServerFound = false;
 					if (!capableServerFound){
 						for (String[] server : whichServerToSendTo){
-							System.out.println(Integer.parseInt(server[4]) + " this is the number of cores of server[4");
-							System.out.println(Integer.parseInt(msgRes[4]) + " this is the number of cores of msgRes[4");
 							if ((Integer.parseInt(server[4]) >= Integer.parseInt(msgRes[4])) && Integer.parseInt(server[5]) >= Integer.parseInt(msgRes[5]) && Integer.parseInt(server[6]) >= Integer.parseInt(msgRes[6]) && Integer.parseInt(server[7]) < 2){
 								send("SCHD " + msgRes[2] + " " + server[0] + " " + server[1]);
 								capableServerFound = true;
@@ -175,38 +144,42 @@ public class AppStage2 {
 						}
 
 					} 
+					/* 
+						LSTJ each server which is capable
+						add up their est remaining times of jobs
+						find the one with the lowest est remaining time
+						schd job to that server 
+					*/
+
 					if (!capableServerFound){
-						System.out.println("entered else if for LSTJ ");
-						send("LSTJ " + whichServerToSendTo.get(0)[0] + " " + Integer.parseInt(whichServerToSendTo.get(0)[1]));
-						msg = receive();
-						String[] lstjRes = msg.split(" ");
-						ArrayList<String[]> lstjResponseArr = new ArrayList<String[]>();
-
-						send("OK");
-						// msg = receive(); //should be .
-
-						for (int i = 0; i < Integer.parseInt(lstjRes[1]); i++){
-
+						int lowestEstRemainingTime = 9999999;
+						String[] serverToSendTo = whichServerToSendTo.get(0);
+						for (String[] server: whichServerToSendTo) {
+							int estRemainingTime = 0;
+							send("LSTJ " + server[0] + " " + Integer.parseInt(server[1]));
 							msg = receive();
-							String[] temp = msg.split(" ");
-							lstjResponseArr.add(temp);
-							System.out.println(java.util.Arrays.toString(temp) + "temp msg");
+
+							send("OK");
+
+							String[] lstjRes = msg.split(" ");
+							ArrayList<String[]> lstjResponseArr = new ArrayList<String[]>();
+							
+							for (int i = 0; i < Integer.parseInt(lstjRes[1]); i++){
+								msg = receive();
+								String[] temp = msg.split(" ");
+								lstjResponseArr.add(temp);
+								estRemainingTime += Integer.parseInt(temp[4]);
+								if (estRemainingTime < lowestEstRemainingTime && server[2].equals("active")){   //should i also check how many running jobs there are???
+									lowestEstRemainingTime = estRemainingTime;
+									serverToSendTo = server;
+								}
+							}
+							send("OK");
+							msg = receive(); // should be .
+
 						}
-						send("OK");
-						msg = receive(); // should be .
-
-						//would be n ice to loop thru and find the most efficient server (ie, least amount of remainign time left) to send to
-						send("SCHD " + msgRes[2] + " " + whichServerToSendTo.get(0)[0] + " " + Integer.parseInt(whichServerToSendTo.get(0)[1]));
+						send("SCHD " + msgRes[2] + " " + serverToSendTo[0] + " " + Integer.parseInt(serverToSendTo[1]));
 					}
-
-				// example, if:
-				// c: Gets Capable x y z
-				// s: serverType serverID state curStartTime core memory disk #wJobs #rJobs
-				//        0         1        2       3         4    5      6    7       8
-
-				//	JOBN submitTime jobID estRuntime core memory disk
-				//    0      1         2    3         4      5    6
-
 				
 				//if Job Complete, then send ready and read new msg
 				}
@@ -240,9 +213,6 @@ public class AppStage2 {
 			msg = receive();
 		}
 	}
-
-
-	//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  END OF TESTING  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 	//sending msgs to server
 	public void send(String s){
