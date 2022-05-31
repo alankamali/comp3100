@@ -11,5 +11,5 @@ The algorithm first finds the BF for the jobs coming in from ds-server and then 
 ## Usage
 `$ ds-server -c ds-config01.xml -v brief -n`
 
-`$ java AppStage2 $ for stage 2 of this assignment
+`$ java AppStage2 ` $ for stage 2 of this assignment
 
